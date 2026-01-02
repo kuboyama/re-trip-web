@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Re:Trip - 招待</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      font-size: 28px;
+    }
+    p {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #fff;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 10px;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: scale(1.05);
+    }
+    .loading {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Re:Trip</h1>
+    <p>旅行に招待されました！</p>
+    <div class="loading">アプリを開いています...</div>
+    <p id="fallback" style="display: none;">
+      アプリがインストールされていないようです。<br>
+      以下のリンクからアプリをインストールしてください。
+    </p>
+    <a id="appStoreLink" href="#" class="button" style="display: none;">アプリをインストール</a>
+  </div>
+
+  <script>
+    // URLパラメータからtripIdを取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const tripId = urlParams.get('tripId') || window.location.pathname.split('/').pop();
+    
+    // ディープリンクのURL
+    const deepLink = 'retrip://trip/' + tripId + '/invite';
+    
+    // アプリストアのURL（ユーザーエージェントから判定）
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    let appStoreUrl = '';
+    
+    if (/android/i.test(userAgent)) {
+      appStoreUrl = 'https://play.google.com/store/apps/details?id=com.retrip.app';
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      appStoreUrl = 'https://apps.apple.com/app/retrip/id<APP_ID>'; // 実際のApp Store IDに置き換える
+    }
+    
+    // アプリを開く試み
+    let appOpened = false;
+    const startTime = Date.now();
+    
+    // ディープリンクを開く
+    window.location.href = deepLink;
+    
+    // アプリが開かれなかった場合のフォールバック
+    // 注意: この方法は完全に信頼できるわけではありません
+    // より確実な方法は、ユニバーサルリンク/アプリリンクを使用することです
+    setTimeout(() => {
+      // ページがまだ表示されている場合、アプリが開かれなかったと判断
+      // ただし、この方法は完全に信頼できるわけではありません
+      if (document.visibilityState === 'visible') {
+        const fallbackElement = document.getElementById('fallback');
+        const appStoreLinkElement = document.getElementById('appStoreLink');
+        
+        if (fallbackElement && appStoreLinkElement && appStoreUrl) {
+          fallbackElement.style.display = 'block';
+          appStoreLinkElement.href = appStoreUrl;
+          appStoreLinkElement.style.display = 'inline-block';
+        }
+      }
+    }, 2000);
+    
+    // ページが非表示になった場合（アプリが開かれた可能性）
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        appOpened = true;
+      }
+    });
+    
+    // バックグラウンドから戻ってきた場合
+    window.addEventListener('pageshow', () => {
+      if (!appOpened && appStoreUrl) {
+        const fallbackElement = document.getElementById('fallback');
+        const appStoreLinkElement = document.getElementById('appStoreLink');
+        
+        if (fallbackElement && appStoreLinkElement) {
+          fallbackElement.style.display = 'block';
+          appStoreLinkElement.href = appStoreUrl;
+          appStoreLinkElement.style.display = 'inline-block';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
+
